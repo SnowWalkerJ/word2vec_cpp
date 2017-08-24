@@ -16,7 +16,7 @@
 
 double sigmoid(double x) {
     double ex = exp(x);
-    return ex / (1 + ex);
+    return ex / (1.0 + ex);
 }
 
 Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned int negSize):numObjects(numObjects), windowRadius(windowRadius), negSize(negSize) {
@@ -27,6 +27,7 @@ Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned
         embOut[i] = Vector<EMBEDDING_SIZE>();
         for (int j = 0; j < EMBEDDING_SIZE; j++) {
             embIn[i].set(j, ((double)random() / RAND_MAX - 0.5) * 0.001);
+            embOut[i].set(j, 0.0);
         }
     }
 }
@@ -58,7 +59,7 @@ double Word2Vec::update(unsigned long word, const vector<unsigned long> &context
         grad_u += v * grad0;
     }
     embIn[word] -= grad_u;
-    return loss;
+    return loss / (context.size() + negative.size());
 }
 
 void Word2Vec::save(string savePath, const vector<string> &vocabulary) {

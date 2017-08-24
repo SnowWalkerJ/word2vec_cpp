@@ -145,6 +145,7 @@ int main(int argc, const char * argv[]) {
     size_t size = corpus.size();
     clock_t t1 = clock();
     double sumLoss = 0.0;
+    const unsigned long N = 100;
     for (unsigned long long i = WINDOW_RADIUS; i < size - WINDOW_RADIUS; i++) {
         unsigned long word = corpus[i];
         vector<unsigned long> context, negative;
@@ -159,13 +160,13 @@ int main(int argc, const char * argv[]) {
         }
         double loss = w2v.update(word, context, negative, 0.025);
         sumLoss += loss;
-        if (i % 10000 == 0) {
+        if (i % N == 0) {
             clock_t t2 = clock();
             double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
             t1 = t2;
-            double meanLoss = sumLoss / 10000.0;
+            double meanLoss = sumLoss / (double)N;
             double pct = i * 100.0 / (size - WINDOW_RADIUS);
-            cout << "Loss: " << meanLoss << "\trpm: " << 1000.0 * 60.0 / delta_t;
+            cout << "Loss: " << meanLoss << "\trpm: " << N * 60.0 / delta_t;
             cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
             sumLoss = 0;
         }
