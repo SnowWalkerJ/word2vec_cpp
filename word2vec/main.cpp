@@ -27,7 +27,7 @@ vector<string> BuildVocabulary(char* filePath) {
     
     string word;
     if (!file.is_open()) {
-        cout << "Can't open file " << filePath;
+        cout << "Can't open file " << filePath << endl;
         return vector<string>();
     }
     while(!file.eof()) {
@@ -136,7 +136,7 @@ int main(int argc, const char * argv[]) {
     // insert code here...
     //L = 4;
     std::cout << "Word2Vec\n";
-    string path("/Users/snowwalkerj/Downloads/text8");
+    string path("text8");
     char *p = (char*)path.data();
     vector<string> vocabulary = GetVocabulary(p);
     vector<unsigned long> corpus = GetCorpus(p, vocabulary);

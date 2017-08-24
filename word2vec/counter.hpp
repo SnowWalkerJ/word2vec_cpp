@@ -11,6 +11,7 @@
 
 #include <map>
 #include <stdio.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -47,7 +48,8 @@ public:
     }
     Pair<T>** sort() {
         unsigned long size = data.size();
-        Pair<T>** result = (Pair<T>**)malloc(size * sizeof(Pair<T>*));
+        //Pair<T>** result = (Pair<T>**)malloc(size * sizeof(Pair<T>*));
+        Pair<T>** result = new Pair<T>*[size];
         unsigned long i = 0;
         for (typename MyMap::iterator iter = data.begin(); iter != data.end(); iter++) {
             result[i++] = new Pair<T>(iter->first, iter->second);
