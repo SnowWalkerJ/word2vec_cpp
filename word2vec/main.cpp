@@ -145,7 +145,7 @@ int main(int argc, const char * argv[]) {
     size_t size = corpus.size();
     clock_t t1 = clock();
     double sumLoss = 0.0, loss;
-    const unsigned long N = 1000;
+    const unsigned long N = 100000;
     unsigned long pos_w, pos_c, neg_w, neg_c;
     default_random_engine generator;
     uniform_int_distribution<unsigned long> distribution(1, maxIndex);
@@ -174,7 +174,7 @@ int main(int argc, const char * argv[]) {
             cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
             sumLoss = 0;
         }
-    delete pos_w, pos_c, neg_w, neg_c;
+    }
     w2v.save(path + ".w2v", vocabulary);
     return 0;
 }

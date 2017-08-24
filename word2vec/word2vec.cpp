@@ -32,7 +32,7 @@ Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned
     }
 }
 
-double Word2Vec::update(unsigned long w, unsigned long c, double lr=0.01, bool isNegative) {
+double Word2Vec::update(unsigned long w, unsigned long c, double lr, bool isNegative) {
     Vector<EMBEDDING_SIZE> u = embIn[w];
     Vector<EMBEDDING_SIZE> v = embOut[c];
     double sign = isNegative ? -1.0 : 1.0;
