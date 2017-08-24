@@ -40,7 +40,7 @@ double Word2Vec::update(unsigned long word, const vector<unsigned long> &context
         Vector<EMBEDDING_SIZE> v = embOut[c];
         double logit = u.dot(v);
         double probability = sigmoid(logit);
-        double grad0 = -1.0 / probability * logit * (1 - logit) * lr;
+        double grad0 = -1.0 * (1 - probability) * lr;
         loss += -log(probability);
         Vector<EMBEDDING_SIZE> grad_v = u * grad0;
         embOut[c] -= grad_v;
@@ -51,7 +51,7 @@ double Word2Vec::update(unsigned long word, const vector<unsigned long> &context
         Vector<EMBEDDING_SIZE> v = embOut[c];
         double logit = u.dot(v);
         double probability = 1 - sigmoid(logit);
-        double grad0 = 1.0 / probability * logit * (1 - logit) * lr;
+        double grad0 = 1.0 * (1 - probability) * lr;
         loss += -log(probability);
         Vector<EMBEDDING_SIZE> grad_v = u * grad0;
         embOut[c] -= grad_v;
