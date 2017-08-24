@@ -144,33 +144,37 @@ int main(int argc, const char * argv[]) {
     Word2Vec w2v = Word2Vec(maxIndex, WINDOW_RADIUS, NEG_NUM);
     size_t size = corpus.size();
     clock_t t1 = clock();
-    double sumLoss = 0.0;
-    const unsigned long N = 100;
+    double sumLoss = 0.0, loss;
+    const unsigned long N = 1000;
+    unsigned long pos_w, pos_c, neg_w, neg_c;
+    default_random_engine generator;
+    uniform_int_distribution<unsigned long> distribution(1, maxIndex);
     for (unsigned long long i = WINDOW_RADIUS; i < size - WINDOW_RADIUS; i++) {
         unsigned long word = corpus[i];
-        vector<unsigned long> context, negative;
         for (int j = -WINDOW_RADIUS; j < WINDOW_RADIUS; j++) {
             if (j == 0) continue;
-            context.push_back(j < 0 ? corpus[i+j] : corpus[i+j+1]);
+            pos_w = word;
+            pos_c = corpus[j < 0 ? i + j : i + j + 1];
+            loss = w2v.update(pos_w, pos_c, LR, false);
+            sumLoss += loss;
+            for (int k = 0; k < NEG_NUM; k++) {
+                neg_w = distribution(generator);
+                neg_c = distribution(generator);
+                loss = w2v.update(neg_w, neg_c, LR, true);
+                sumLoss += loss;
+            }
         }
-        default_random_engine generator;
-        uniform_int_distribution<unsigned long> distribution(1, maxIndex);
-        for (unsigned int j = 0; j < NEG_NUM; j++) {
-            negative.push_back(distribution(generator));
-        }
-        double loss = w2v.update(word, context, negative, 0.025);
-        sumLoss += loss;
         if (i % N == 0) {
             clock_t t2 = clock();
             double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
             t1 = t2;
-            double meanLoss = sumLoss / (double)N;
+            double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1));
             double pct = i * 100.0 / (size - WINDOW_RADIUS);
-            cout << "Loss: " << meanLoss << "\trpm: " << N * 60.0 / delta_t;
+            cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
             cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
             sumLoss = 0;
         }
-    }
+    delete pos_w, pos_c, neg_w, neg_c;
     w2v.save(path + ".w2v", vocabulary);
     return 0;
 }

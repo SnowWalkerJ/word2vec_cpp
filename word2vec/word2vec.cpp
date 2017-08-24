@@ -32,34 +32,19 @@ Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned
     }
 }
 
-double Word2Vec::update(unsigned long word, const vector<unsigned long> &context, const vector<unsigned long> &negative, double lr=0.01) {
-    Vector<EMBEDDING_SIZE> u = embIn[word];
-    Vector<EMBEDDING_SIZE> grad_u = Vector<EMBEDDING_SIZE>();
-    double loss = 0.0;
-    for (int i = 0; i < context.size(); i++) {
-        unsigned long c = context[i];
-        Vector<EMBEDDING_SIZE> v = embOut[c];
-        double logit = u.dot(v);
-        double probability = sigmoid(logit);
-        double grad0 = -1.0 * (1 - probability) * lr;
-        loss += -log(probability);
-        Vector<EMBEDDING_SIZE> grad_v = u * grad0;
-        embOut[c] -= grad_v;
-        grad_u += v * grad0;
-    }
-    for (int i = 0; i < negative.size(); i++) {
-        unsigned long c = negative[i];
-        Vector<EMBEDDING_SIZE> v = embOut[c];
-        double logit = u.dot(v);
-        double probability = 1 - sigmoid(logit);
-        double grad0 = 1.0 * (1 - probability) * lr;
-        loss += -log(probability);
-        Vector<EMBEDDING_SIZE> grad_v = u * grad0;
-        embOut[c] -= grad_v;
-        grad_u += v * grad0;
-    }
-    embIn[word] -= grad_u;
-    return loss / (context.size() + negative.size());
+double Word2Vec::update(unsigned long w, unsigned long c, double lr=0.01, bool isNegative) {
+    Vector<EMBEDDING_SIZE> u = embIn[w];
+    Vector<EMBEDDING_SIZE> v = embOut[c];
+    double sign = isNegative ? -1.0 : 1.0;
+    double logit = u.dot(v * sign);
+    double probability = sigmoid(logit);
+    double grad0 = - sign * (1 - probability) * lr;
+    double loss = -log(probability);
+    Vector<EMBEDDING_SIZE> grad_v = u * grad0;
+    Vector<EMBEDDING_SIZE>grad_u = v * grad0;
+    embOut[c] -= grad_v;
+    embIn[w] -= grad_u;
+    return loss;
 }
 
 void Word2Vec::save(string savePath, const vector<string> &vocabulary) {

@@ -26,7 +26,7 @@ private:
     
 public:
     Word2Vec(unsigned long, unsigned int, unsigned int);
-    double update(unsigned long, const vector<unsigned long>&, const vector<unsigned long>&, double);
+    double update(unsigned long, unsigned long, double, bool);
     void save(string, const vector<string>&);
 };
 

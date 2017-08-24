@@ -1,12 +1,11 @@
 CC:=g++
-
-
+FLAG:=-std=c++11
 
 main : main.o word2vec.o
-	g++ -o main main.o word2vec.o -std=c++11
+	$(CC) -o main main.o word2vec.o $(FLAG)
 
 main.o : main.cpp word2vec.hpp vector.hpp settings.h counter.hpp 
-	g++ -c main.cpp -std=c++11
+	$(CC) -c main.cpp $(FLAG)
 
 word2vec.o : word2vec.cpp vector.hpp settings.h counter.hpp
-	g++ -c word2vec.cpp -std=c++11
+	$(CC) -c word2vec.cpp $(FLAG)
