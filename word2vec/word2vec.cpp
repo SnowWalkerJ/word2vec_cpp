@@ -41,7 +41,7 @@ double Word2Vec::update(unsigned long w, unsigned long c, double lr, bool isNega
     double grad0 = - sign * (1 - probability) * lr;
     double loss = -log(probability);
     Vector<EMBEDDING_SIZE> grad_v = u * grad0;
-    Vector<EMBEDDING_SIZE>grad_u = v * grad0;
+    Vector<EMBEDDING_SIZE> grad_u = v * grad0;
     embOut[c] -= grad_v;
     embIn[w] -= grad_u;
     return loss;
@@ -54,8 +54,8 @@ void Word2Vec::save(string savePath, const vector<string> &vocabulary) {
         return;
     }
     for (unsigned long i = 0; i < numObjects; i++) {
-        //string word = i == 0 ? "UNK" : vocabulary[i-1];
-        //oFile << word << ' ';
+        string word = i == 0 ? "UNK" : vocabulary[i-1];
+        oFile << word << ' ';
         for (unsigned int j = 0; j < EMBEDDING_SIZE; j++) {
             oFile << embIn[i][j];
             if ( i < EMBEDDING_SIZE - 1) {
@@ -67,3 +67,4 @@ void Word2Vec::save(string savePath, const vector<string> &vocabulary) {
     }
     oFile.close();
 }
+
