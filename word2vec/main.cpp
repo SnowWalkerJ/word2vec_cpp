@@ -168,7 +168,7 @@ int main(int argc, const char * argv[]) {
             clock_t t2 = clock();
             double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
             t1 = t2;
-            double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1));
+            double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
             double pct = i * 100.0 / (size - WINDOW_RADIUS);
             cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
             cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
