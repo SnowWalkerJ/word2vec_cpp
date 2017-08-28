@@ -13,6 +13,7 @@
 #include <random>
 #include <time.h>
 #include <math.h>
+#include <pthread.h>
 #include "counter.hpp"
 #include "vector.hpp"
 #include "word2vec.hpp"
@@ -133,24 +134,30 @@ vector<unsigned long> GetCorpus(const char* filePath, const vector<string> &voca
     return result;
 }
 
-void train(){
-    string path("text8");
-    char *p = (char*)path.data();
-    vector<string> vocabulary = GetVocabulary(p);
-    vector<unsigned long> corpus = GetCorpus(p, vocabulary);
-    unsigned long maxIndex = vocabulary.size() + 1;
-    Word2Vec w2v = Word2Vec(maxIndex, WINDOW_RADIUS, NEG_NUM);
-    size_t size = corpus.size();
+struct Param {
+    int id;
+    Word2Vec* w2v;
+    vector<unsigned long>* corpus;
+    unsigned long maxIndex;
+};
+
+void* trainThread(void* args) {
+    Param pargs = *((Param*)args);
+    vector<unsigned long> corpus = *(pargs.corpus);
+    Word2Vec w2v = *(pargs.w2v);
+    unsigned long blockSize = (unsigned long)(pargs.corpus->size() / NUM_THREADS);
+    unsigned long start = pargs.id * blockSize < WINDOW_RADIUS ? WINDOW_RADIUS : pargs.id * blockSize,
+                  end   = (pargs.id + 1) * blockSize >= corpus.size() - WINDOW_RADIUS ? corpus.size() - WINDOW_RADIUS : (pargs.id+1) * blockSize;
     clock_t t1 = clock();
     double sumLoss = 0.0, loss;
     const unsigned long N = 100000;
     unsigned int numEpochs = 1;
     unsigned long pos_w, pos_c, neg_w, neg_c;
     default_random_engine generator;
-    uniform_int_distribution<unsigned long> distribution(1, maxIndex);
+    uniform_int_distribution<unsigned long> distribution(1, pargs.maxIndex);
     double lr = LR;
     for (unsigned int epoch = 0; epoch < numEpochs; epoch++) {
-        for (unsigned long long i = WINDOW_RADIUS; i < size - WINDOW_RADIUS; i++) {
+        for (unsigned long long i = start; i < end; i++) {
             unsigned long word = corpus[i];
             for (int j = -WINDOW_RADIUS; j < WINDOW_RADIUS; j++) {
                 if (j == 0) continue;
@@ -165,12 +172,12 @@ void train(){
                     sumLoss += loss;
                 }
             }
-            if (i % N == 0) {
+            if (pargs.id == 0 && i % N == 0) {
                 clock_t t2 = clock();
                 double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
                 t1 = t2;
-                double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1));
-                double pct = ((double)i / (size - WINDOW_RADIUS) + epoch) / numEpochs * 100.0;
+                double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
+                double pct = ((double)i / (end - start) + epoch) / numEpochs * 100.0;
                 lr = LR * pow(0.01, pct / 100);
                 cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
                 cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
@@ -178,7 +185,26 @@ void train(){
             }
         }
     }
+    pthread_exit(NULL);
+}
+
+void train(){
+    string path("text8");
+    char *p = (char*)path.data();
+    vector<string> vocabulary = GetVocabulary(p);
+    vector<unsigned long> corpus = GetCorpus(p, vocabulary);
+    unsigned long maxIndex = vocabulary.size() + 1;
+    Word2Vec w2v = Word2Vec(maxIndex, WINDOW_RADIUS, NEG_NUM);
+    pthread_t *pt = new pthread_t[NUM_THREADS];
+    for (int threadId = 0; threadId < NUM_THREADS; threadId++) {
+        Param args = {threadId, &w2v, &corpus, maxIndex};
+        pthread_create(&pt[threadId], NULL, trainThread, &args);
+    }
+    for (int threadId = 0; threadId < NUM_THREADS; threadId++) {
+        pthread_join(pt[threadId], NULL);
+    }
     w2v.save(path + ".w2v", vocabulary);
+    delete pt;
 }
 
 map<string, Vector<EMBEDDING_SIZE>> load(string path) {
@@ -199,11 +225,12 @@ map<string, Vector<EMBEDDING_SIZE>> load(string path) {
         }
         data.insert(map<string, Vector<EMBEDDING_SIZE>>::value_type(word, vec));
     }
+    cout << "Load model complete, " << data.size() << " instances loaded" << endl;
     return data;
 }
 
-string* nearest(map<string, Vector<EMBEDDING_SIZE>> mapping, string word, unsigned int n=10) {
-    map<string, Vector<EMBEDDING_SIZE>>::iterator iter = mapping.find(word);
+string* nearest(const map<string, Vector<EMBEDDING_SIZE>> &mapping, const string &word, unsigned int n=10) {
+    map<string, Vector<EMBEDDING_SIZE>>::const_iterator iter = mapping.find(word);
     if (iter == mapping.end()) return NULL;
     string* result = new string[n];
     double* distances = new double[n];
@@ -218,7 +245,7 @@ string* nearest(map<string, Vector<EMBEDDING_SIZE>> mapping, string word, unsign
         double distance = v.dot(vec) / sqrt(v.dot(v) * vec.dot(vec));
         for (unsigned i = 0; i < n; i++) {
             if (distance > distances[i]) {
-                for (unsigned int j = n; j > i; j--) {
+                for (unsigned int j = n-1; j > i; j--) {
                     distances[j] = distances[j-1];
                     result[j] = result[j-1];
                 }
@@ -241,6 +268,7 @@ void show() {
         cin >> word;
         if (word == "EXIT") exit(0);
         string* result = nearest(data, word, n);
+        cout << "Find Nearest" << endl;
         if (result == NULL) {
             cout << "Can't find word " << word << endl;
             continue;
@@ -249,6 +277,7 @@ void show() {
             string w = result[i];
             cout << w << endl;
         }
+        // delete result;
     }
 }
 
