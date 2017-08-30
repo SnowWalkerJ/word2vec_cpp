@@ -7,15 +7,21 @@
 //
 
 #include "word2vec.hpp"
+#include "expTable.hpp"
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
 #include <fstream>
 
-#define GET_ARRAY_LEN(array) (sizeof(array) / sizeof(array[0]))
+
+double* table = buildExpTable()
+
+double expT(double x) {
+    return lookupExpTable(table, x);
+}
 
 double sigmoid(double x) {
-    double ex = exp(x);
+    double ex = expT(x);
     return ex / (1.0 + ex);
 }
 
