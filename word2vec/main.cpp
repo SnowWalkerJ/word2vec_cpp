@@ -154,12 +154,11 @@ void* trainThread(void* args) {
     clock_t t1 = clock();
     double sumLoss = 0.0, loss;
     const unsigned long N = 100000;
-    unsigned int numEpochs = 1;
     unsigned long pos_w, pos_c, neg_w, neg_c;
     default_random_engine generator;
     uniform_int_distribution<unsigned long> distribution(1, pargs.maxIndex);
     double lr = LR;
-    for (unsigned int epoch = 0; epoch < numEpochs; epoch++) {
+    for (unsigned int epoch = 0; epoch < NUM_EPOCHS; epoch++) {
         for (unsigned long long i = start; i < end; i++) {
             unsigned long word = corpus[i];
             for (int j = -WINDOW_RADIUS; j < WINDOW_RADIUS; j++) {
@@ -180,7 +179,7 @@ void* trainThread(void* args) {
                 double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
                 t1 = t2;
                 double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
-                double pct = ((double)i / (end - start + 1) + epoch) / numEpochs * 100.0;
+                double pct = ((double)i / (end - start + 1) + epoch) / NUM_EPOCHS * 100.0;
                 lr = LR * pow(0.00001, pct / 100);
                 cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
                 cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;

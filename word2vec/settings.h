@@ -11,9 +11,10 @@
 
 #define EMBEDDING_SIZE 200
 #define WINDOW_RADIUS 8
-#define NEG_NUM 10
+#define NEG_NUM 25
 #define BATCH_SIZE 64
 #define LR 0.025
 #define NUM_THREADS 4
+#define NUM_EPOCHS 15
 
 #endif /* settings_h */
