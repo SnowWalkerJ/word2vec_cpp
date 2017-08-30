@@ -14,15 +14,12 @@
 #include <fstream>
 
 
-double* table = buildExpTable()
-
-double expT(double x) {
-    return lookupExpTable(table, x);
-}
+double* table = buildExpTable();
 
 double sigmoid(double x) {
-    double ex = expT(x);
-    return ex / (1.0 + ex);
+    double ex = exp(x);
+    return ex / (1 + ex);
+    //return lookupExpTable(table, x);
 }
 
 Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned int negSize):numObjects(numObjects), windowRadius(windowRadius), negSize(negSize) {

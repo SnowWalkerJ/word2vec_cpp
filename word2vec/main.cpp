@@ -23,14 +23,14 @@ using namespace std;
 
 
 vector<string> BuildVocabulary(char* filePath) {
-    
+    cout << "Building Vocabulary.....";
     ifstream file(filePath);
     Counter<string> counter;
     
     string word;
     if (!file.is_open()) {
         cout << "Can't open file " << filePath << endl;
-        return vector<string>();
+        exit(1);
     }
     while(!file.eof()) {
         file >> word;
@@ -48,6 +48,7 @@ vector<string> BuildVocabulary(char* filePath) {
         //cout << pair->item << ' ' << pair->count << endl;
     }
     delete sorted;
+    cout << "Finished" << endl;
     return vocabulary;
 }
 
@@ -89,11 +90,12 @@ map<string, unsigned long> BuildInverseDict(const vector<string>& vocabulary) {
 }
 
 vector<unsigned long> BuildCorpus(const char* filePath, const vector<string> &vocabulary) {
+    cout << "Building Corpus......";
     map<string, unsigned long> inverseDict = BuildInverseDict(vocabulary);
     ifstream corpusFile(filePath);
     if (!corpusFile.is_open()) {
         cout << "Can't open file " << filePath << endl;
-        return vector<unsigned long>();
+        exit(1);
     }
     vector<unsigned long> result;
     while (!corpusFile.eof()) {
@@ -104,6 +106,7 @@ vector<unsigned long> BuildCorpus(const char* filePath, const vector<string> &vo
         result.push_back(wordId);
     }
     corpusFile.close();
+    cout << "Finished" << endl;
     return result;
 }
 
@@ -177,8 +180,8 @@ void* trainThread(void* args) {
                 double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
                 t1 = t2;
                 double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
-                double pct = ((double)i / (end - start) + epoch) / numEpochs * 100.0;
-                lr = LR * pow(0.01, pct / 100);
+                double pct = ((double)i / (end - start + 1) + epoch) / numEpochs * 100.0;
+                lr = LR * pow(0.00001, pct / 100);
                 cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
                 cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
                 sumLoss = 0;
@@ -197,8 +200,13 @@ void train(){
     Word2Vec w2v = Word2Vec(maxIndex, WINDOW_RADIUS, NEG_NUM);
     pthread_t *pt = new pthread_t[NUM_THREADS];
     for (int threadId = 0; threadId < NUM_THREADS; threadId++) {
-        Param args = {threadId, &w2v, &corpus, maxIndex};
-        pthread_create(&pt[threadId], NULL, trainThread, &args);
+        Param *args    = new Param();
+        args->id       = threadId;
+        args->w2v      = &w2v;
+        args->corpus   = &corpus;
+        args->maxIndex = maxIndex;
+        //trainThread(&args);
+        pthread_create(&pt[threadId], NULL, trainThread, args);
     }
     for (int threadId = 0; threadId < NUM_THREADS; threadId++) {
         pthread_join(pt[threadId], NULL);
@@ -208,6 +216,8 @@ void train(){
 }
 
 map<string, Vector<EMBEDDING_SIZE>> load(string path) {
+    double tmp;
+    cout << "Loading Model" << endl;
     map<string, Vector<EMBEDDING_SIZE>> data;
     ifstream iFile(path);
     if (!iFile.is_open()) {
@@ -217,12 +227,7 @@ map<string, Vector<EMBEDDING_SIZE>> load(string path) {
     while (!iFile.eof()) {
         string word;
         Vector<EMBEDDING_SIZE> vec;
-        iFile >> word;
-        for (int i = 0; i < EMBEDDING_SIZE; i++) {
-            double tmp;
-            iFile >> tmp;
-            vec.set(i, tmp);
-        }
+        iFile >> word >> vec;
         data.insert(map<string, Vector<EMBEDDING_SIZE>>::value_type(word, vec));
     }
     cout << "Load model complete, " << data.size() << " instances loaded" << endl;
@@ -268,7 +273,6 @@ void show() {
         cin >> word;
         if (word == "EXIT") exit(0);
         string* result = nearest(data, word, n);
-        cout << "Find Nearest" << endl;
         if (result == NULL) {
             cout << "Can't find word " << word << endl;
             continue;

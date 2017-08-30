@@ -1,5 +1,5 @@
 CC:=g++
-FLAG:=-std=c++11
+FLAG:=-std=c++11 -g -Ofast -funroll-loops
 
 main : main.o word2vec.o settings.h
 	$(CC) -o main main.o word2vec.o expTable.o $(FLAG) -lpthread -lm

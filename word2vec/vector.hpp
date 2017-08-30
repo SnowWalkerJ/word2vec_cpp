@@ -10,6 +10,9 @@
 #define vector_hpp
 
 #include <stdio.h>
+#include <iostream>
+
+using namespace std;
 
 
 template <int L>
@@ -156,9 +159,15 @@ public:
     inline int Length() {
         return L;
     }
-    double set(int index, double value){
+    inline double set(int index, double value){
         data[index] = value;
         return value;
+    }
+    friend inline istream & operator >> (istream & inStream, Vector<L> & v) {
+        for (unsigned int i = 0; i < L; i++ ) {
+            inStream >> v.data[i];
+        }
+        return inStream;
     }
 };
 
