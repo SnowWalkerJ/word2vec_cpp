@@ -19,6 +19,7 @@ using namespace std;
 
 class Word2Vec {
 private:
+    Vector<EMBEDDING_SIZE> grad;
     const unsigned windowRadius, negSize;
     const unsigned long numObjects;
     Vector<EMBEDDING_SIZE>* embIn;
@@ -26,7 +27,8 @@ private:
     
 public:
     Word2Vec(unsigned long, unsigned int, unsigned int);
-    double update(unsigned long, unsigned long, double, bool);
+    void applyGrad(unsigned long, Vector<EMBEDDING_SIZE>);
+    double update(unsigned long, unsigned long, double, bool, Vector<EMBEDDING_SIZE>*);
     void save(string, const vector<string>&);
 };
 

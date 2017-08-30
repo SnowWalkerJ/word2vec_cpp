@@ -21,7 +21,11 @@ private:
     double data[L];
     
 public:
-    Vector(){};
+    Vector(){
+        for (int i = 0; i < L; i++) {
+            data[i] = 0;
+        }
+    }
     Vector(double* initValues) {
         for (int i = 0; i < L; i++) {
             data[i] = initValues[i];

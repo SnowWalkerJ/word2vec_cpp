@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		71B1D3761F56F971003B93EF /* expTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71B1D3741F56F971003B93EF /* expTable.cpp */; };
 		71C045A71F4C65030028B35F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71C045A61F4C65030028B35F /* main.cpp */; };
 		71C045B21F4C7F260028B35F /* word2vec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71C045B01F4C7F260028B35F /* word2vec.cpp */; };
 /* End PBXBuildFile section */
@@ -26,6 +27,8 @@
 /* Begin PBXFileReference section */
 		7112FCD11F4DC68F00042CFE /* settings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
 		7191F4721F4D9E97009D2F18 /* counter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = counter.hpp; sourceTree = "<group>"; };
+		71B1D3741F56F971003B93EF /* expTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = expTable.cpp; sourceTree = "<group>"; };
+		71B1D3751F56F971003B93EF /* expTable.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = expTable.hpp; sourceTree = "<group>"; };
 		71C045A31F4C65030028B35F /* word2vec */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = word2vec; sourceTree = BUILT_PRODUCTS_DIR; };
 		71C045A61F4C65030028B35F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		71C045AE1F4C655B0028B35F /* vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = vector.hpp; sourceTree = "<group>"; };
@@ -63,6 +66,8 @@
 		71C045A51F4C65030028B35F /* word2vec */ = {
 			isa = PBXGroup;
 			children = (
+				71B1D3741F56F971003B93EF /* expTable.cpp */,
+				71B1D3751F56F971003B93EF /* expTable.hpp */,
 				71C045A61F4C65030028B35F /* main.cpp */,
 				7191F4721F4D9E97009D2F18 /* counter.hpp */,
 				71C045AE1F4C655B0028B35F /* vector.hpp */,
@@ -132,6 +137,7 @@
 			files = (
 				71C045A71F4C65030028B35F /* main.cpp in Sources */,
 				71C045B21F4C7F260028B35F /* word2vec.cpp in Sources */,
+				71B1D3761F56F971003B93EF /* expTable.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,5 +16,6 @@
 #define LR 0.025
 #define NUM_THREADS 4
 #define NUM_EPOCHS 15
+#define TABLE_SIZE 100000000
 
 #endif /* settings_h */

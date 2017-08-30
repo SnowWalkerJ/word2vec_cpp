@@ -17,14 +17,15 @@
 double* table = buildExpTable();
 
 double sigmoid(double x) {
-    double ex = exp(x);
-    return ex / (1 + ex);
-    //return lookupExpTable(table, x);
+//    double ex = exp(x);
+//    return ex / (1 + ex);
+    return lookupExpTable(table, x);
 }
 
 Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned int negSize):numObjects(numObjects), windowRadius(windowRadius), negSize(negSize) {
     embIn = new Vector<EMBEDDING_SIZE>[numObjects];
     embOut = new Vector<EMBEDDING_SIZE>[numObjects];
+    grad = Vector<EMBEDDING_SIZE>();
     for (int i = 0; i < numObjects; i++) {
         embIn[i] = Vector<EMBEDDING_SIZE>();
         embOut[i] = Vector<EMBEDDING_SIZE>();
@@ -35,7 +36,11 @@ Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned
     }
 }
 
-double Word2Vec::update(unsigned long w, unsigned long c, double lr, bool isNegative) {
+void Word2Vec::applyGrad(unsigned long idx, Vector<EMBEDDING_SIZE> grad) {
+    embIn[idx] -= grad;
+}
+
+double Word2Vec::update(unsigned long w, unsigned long c, double lr, bool isNegative, Vector<EMBEDDING_SIZE> *grad) {
     Vector<EMBEDDING_SIZE> u = embIn[w];
     Vector<EMBEDDING_SIZE> v = embOut[c];
     double sign = isNegative ? -1.0 : 1.0;
@@ -46,7 +51,8 @@ double Word2Vec::update(unsigned long w, unsigned long c, double lr, bool isNega
     Vector<EMBEDDING_SIZE> grad_v = u * grad0;
     Vector<EMBEDDING_SIZE> grad_u = v * grad0;
     embOut[c] -= grad_v;
-    embIn[w] -= grad_u;
+    //embIn[w] -= grad_u;
+    *grad += grad_u;
     return loss;
 }
 

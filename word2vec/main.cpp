@@ -22,6 +22,29 @@
 using namespace std;
 
 
+unsigned long* BuildTable(Counter<unsigned long> counter) {
+    const double power = 0.75;
+    double total = 0.0, cum = 0.0;
+    unsigned long *table = new unsigned long[TABLE_SIZE];
+    Pair<unsigned long>** sorted = counter.sort();
+    unsigned long size = counter.size();
+    for (Pair<unsigned long>** ptr = sorted + size - 1; (*ptr)->count < 5; ptr--) {
+        size--;
+    }
+    for (unsigned long i = 0; i < size; i++) {
+        total += pow((double)(sorted[i]->count), power);
+    }
+    unsigned long j = -1;
+    for (unsigned long i = 0; i < TABLE_SIZE; i++) {
+        if ((double)j / TABLE_SIZE > cum) {
+            cum += pow(sorted[++j]->count, power) / total;
+        }
+        table[i] = sorted[j]->item;
+    }
+    return table;
+}
+
+
 vector<string> BuildVocabulary(char* filePath) {
     cout << "Building Vocabulary.....";
     ifstream file(filePath);
@@ -141,7 +164,7 @@ struct Param {
     int id;
     Word2Vec* w2v;
     vector<unsigned long>* corpus;
-    unsigned long maxIndex;
+    unsigned long *table;
 };
 
 void* trainThread(void* args) {
@@ -154,26 +177,27 @@ void* trainThread(void* args) {
     clock_t t1 = clock();
     double sumLoss = 0.0, loss;
     const unsigned long N = 100000;
-    unsigned long pos_w, pos_c, neg_w, neg_c;
+    unsigned long pos_c, neg_c;
     default_random_engine generator;
-    uniform_int_distribution<unsigned long> distribution(1, pargs.maxIndex);
+    uniform_int_distribution<unsigned long> distribution(1, TABLE_SIZE);
     double lr = LR;
     for (unsigned int epoch = 0; epoch < NUM_EPOCHS; epoch++) {
         for (unsigned long long i = start; i < end; i++) {
             unsigned long word = corpus[i];
+            Vector<EMBEDDING_SIZE> grad = Vector<EMBEDDING_SIZE>();
             for (int j = -WINDOW_RADIUS; j < WINDOW_RADIUS; j++) {
                 if (j == 0) continue;
-                pos_w = word;
                 pos_c = corpus[j < 0 ? i + j : i + j + 1];
-                loss = w2v.update(pos_w, pos_c, lr, false);
+                loss = w2v.update(word, pos_c, lr, false, &grad);
                 sumLoss += loss;
                 for (int k = 0; k < NEG_NUM; k++) {
-                    neg_w = distribution(generator);
-                    neg_c = distribution(generator);
-                    loss = w2v.update(neg_w, neg_c, lr, true);
+                    neg_c = pargs.table[distribution(generator)];
+                    if (neg_c == word) continue;
+                    loss = w2v.update(word, neg_c, lr, true, &grad);
                     sumLoss += loss;
                 }
             }
+            w2v.applyGrad(word, grad);
             if (pargs.id == 0 && i % N == 0) {
                 clock_t t2 = clock();
                 double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
@@ -195,6 +219,11 @@ void train(){
     char *p = (char*)path.data();
     vector<string> vocabulary = GetVocabulary(p);
     vector<unsigned long> corpus = GetCorpus(p, vocabulary);
+    Counter<unsigned long> counter;
+    for (unsigned long item : corpus) {
+        counter.add(item);
+    }
+    unsigned long *table = BuildTable(counter);
     unsigned long maxIndex = vocabulary.size() + 1;
     Word2Vec w2v = Word2Vec(maxIndex, WINDOW_RADIUS, NEG_NUM);
     pthread_t *pt = new pthread_t[NUM_THREADS];
@@ -203,7 +232,7 @@ void train(){
         args->id       = threadId;
         args->w2v      = &w2v;
         args->corpus   = &corpus;
-        args->maxIndex = maxIndex;
+        args->table   = table;
         //trainThread(&args);
         pthread_create(&pt[threadId], NULL, trainThread, args);
     }
@@ -211,11 +240,10 @@ void train(){
         pthread_join(pt[threadId], NULL);
     }
     w2v.save(path + ".w2v", vocabulary);
-    delete pt;
+    delete[] pt;
 }
 
 map<string, Vector<EMBEDDING_SIZE>> load(string path) {
-    double tmp;
     cout << "Loading Model" << endl;
     map<string, Vector<EMBEDDING_SIZE>> data;
     ifstream iFile(path);
