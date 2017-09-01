@@ -19,6 +19,9 @@
 #include "word2vec.hpp"
 #include "settings.h"
 
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 using namespace std;
 
 
@@ -28,7 +31,7 @@ unsigned long* BuildTable(Counter<unsigned long> counter) {
     unsigned long *table = new unsigned long[TABLE_SIZE];
     Pair<unsigned long>** sorted = counter.sort();
     unsigned long size = counter.size();
-    for (Pair<unsigned long>** ptr = sorted + size - 1; (*ptr)->count < 5; ptr--) {
+    for (Pair<unsigned long>** ptr = sorted + size - 1; (*ptr)->count < COUNT_THRESHOLD; ptr--) {
         size--;
     }
     for (unsigned long i = 0; i < size; i++) {
@@ -61,7 +64,7 @@ vector<string> BuildVocabulary(char* filePath) {
     }
     Pair<string>** sorted = counter.sort();
     unsigned long size = counter.size();
-    for (Pair<string>** ptr = sorted + size - 1; (*ptr)->count < 5; ptr--) {
+    for (Pair<string>** ptr = sorted + size - 1; (*ptr)->count < COUNT_THRESHOLD; ptr--) {
         size--;
     }
     vector<string> vocabulary;
@@ -172,29 +175,31 @@ void* trainThread(void* args) {
     vector<unsigned long> corpus = *(pargs.corpus);
     Word2Vec w2v = *(pargs.w2v);
     unsigned long blockSize = (unsigned long)(pargs.corpus->size() / NUM_THREADS);
-    unsigned long start = pargs.id * blockSize < WINDOW_RADIUS ? WINDOW_RADIUS : pargs.id * blockSize,
-                  end   = (pargs.id + 1) * blockSize >= corpus.size() - WINDOW_RADIUS ? corpus.size() - WINDOW_RADIUS : (pargs.id+1) * blockSize;
+    unsigned long start = max(pargs.id * blockSize, WINDOW_RADIUS),
+                  end   = min((unsigned long)(pargs.id + 1) * blockSize, (unsigned long)(corpus.size() - WINDOW_RADIUS));
     clock_t t1 = clock();
     double sumLoss = 0.0, loss;
     const unsigned long N = 100000;
-    unsigned long pos_c, neg_c;
+    unsigned long pos_c, neg_c, update_times = 0;
     default_random_engine generator;
     uniform_int_distribution<unsigned long> distribution(1, TABLE_SIZE);
     double lr = LR;
     for (unsigned int epoch = 0; epoch < NUM_EPOCHS; epoch++) {
         for (unsigned long long i = start; i < end; i++) {
             unsigned long word = corpus[i];
-            Vector<EMBEDDING_SIZE> grad = Vector<EMBEDDING_SIZE>();
+            Vector<EMBEDDING_SIZE> grad = Vector<EMBEDDING_SIZE>(0.0);
             for (int j = -WINDOW_RADIUS; j < WINDOW_RADIUS; j++) {
                 if (j == 0) continue;
                 pos_c = corpus[j < 0 ? i + j : i + j + 1];
                 loss = w2v.update(word, pos_c, lr, false, &grad);
                 sumLoss += loss;
+                update_times ++;
                 for (int k = 0; k < NEG_NUM; k++) {
                     neg_c = pargs.table[distribution(generator)];
                     if (neg_c == word) continue;
                     loss = w2v.update(word, neg_c, lr, true, &grad);
                     sumLoss += loss;
+                    update_times ++;
                 }
             }
             w2v.applyGrad(word, grad);
@@ -202,12 +207,12 @@ void* trainThread(void* args) {
                 clock_t t2 = clock();
                 double delta_t = (double)(t2 - t1) / CLOCKS_PER_SEC;
                 t1 = t2;
-                double meanLoss = sumLoss / (double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
+                double meanLoss = sumLoss / update_times; //(double)(N * (NEG_NUM + 1) * WINDOW_RADIUS * 2);
                 double pct = ((double)i / (end - start + 1) + epoch) / NUM_EPOCHS * 100.0;
                 lr = LR * pow(0.00001, pct / 100);
                 cout << "Loss: " << meanLoss << "\trps: " << N / delta_t;
                 cout << "\tTime: " << delta_t << "seconds elapsed\tProgress: " << pct << '%' << endl;
-                sumLoss = 0;
+                sumLoss = 0; update_times = 0;
             }
         }
     }
@@ -312,10 +317,19 @@ void show() {
     }
 }
 
+void show_help() {
+    cout << "Usage:" << endl;
+    cout << "\t./word2vec train" << endl;
+    cout << "\t./word2vec show" << endl;
+}
+
 int main(int argc, const char * argv[]) {
-    cout << "Word2vec" << endl;
-    string command(argv[1]);
-    if (command == "train") train();
-    else if (command == "show") show();
+    if (argc == 1) {
+        show_help();
+    } else {
+        string command(argv[1]);
+        if (command == "train") train();
+        else if (command == "show") show();
+    }
     return 0;
 }

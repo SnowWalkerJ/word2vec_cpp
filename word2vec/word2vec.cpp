@@ -17,9 +17,9 @@
 double* table = buildExpTable();
 
 double sigmoid(double x) {
-//    double ex = exp(x);
-//    return ex / (1 + ex);
-    return lookupExpTable(table, x);
+    double ex = exp(x);
+    return ex / (1 + ex);
+//    return lookupExpTable(table, x);
 }
 
 Word2Vec::Word2Vec(unsigned long numObjects, unsigned int windowRadius, unsigned int negSize):numObjects(numObjects), windowRadius(windowRadius), negSize(negSize) {

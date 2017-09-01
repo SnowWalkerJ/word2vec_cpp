@@ -1,8 +1,9 @@
 CC:=g++
 FLAG:=-std=c++11 -g -Ofast -funroll-loops -march=native
 
-main : main.o word2vec.o settings.h
-	$(CC) -o main main.o word2vec.o expTable.o $(FLAG) -lpthread -lm
+word2vec : main.o word2vec.o settings.h
+	$(CC) -o word2vec main.o word2vec.o expTable.o $(FLAG) -lpthread -lm
+	rm *.o
 
 main.o : main.cpp word2vec.hpp vector.hpp settings.h counter.hpp 
 	$(CC) -c main.cpp $(FLAG)
@@ -14,5 +15,5 @@ expTable.o : expTable.cpp expTable.hpp
 	$(CC) -c expTable.cpp $(FLAG)
 
 clean :
-	rm main
+	rm word2vec
 	rm *.o

@@ -17,5 +17,6 @@
 #define NUM_THREADS 4
 #define NUM_EPOCHS 15
 #define TABLE_SIZE 100000000
+#define COUNT_THRESHOLD 10
 
 #endif /* settings_h */
